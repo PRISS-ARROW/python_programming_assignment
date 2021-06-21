@@ -61,20 +61,4 @@ sn.lineplot(style="darkgrid",data=ideal_data[['x','y13','y1','y4','y34']])
 plt.show()
 
 # # getting the maximum absolute deviation between train data and ideal functions
-# def max_deviation(train_data, ideal_data):
-#     deviations = train_data - ideal_data
-#     return max(abs(deviations))
 
-
-# #print(test_data.head())
-
-# def assign_ideal_functions(test_data):
-#     for i, row in test_data.iterrows():
-#         print(row['y'])
-
-# assign_ideal_functions(test_data)
-
-# # array1 =np.array( [2,3,4])
-# # array2 =np.array( [2,6,4])
-
-# # print(max_deviation(array1, array2 ))
