@@ -7,14 +7,14 @@ import seaborn as sn
 
 train_data = pd.read_csv('train.csv')
 test_data = pd.read_csv('test.csv')
-train_data.head()
-
+#print(train_data.head())
+print(test_data.head())
 # visualizing the data
 sn.lineplot(style="darkgrid",data=train_data)
 plt.show()
 ideal_data = pd.read_csv('ideal.csv')
 
-ideal_data.head()
+print(ideal_data.head())
 
 def least_square(train_y,ideal_y):
     array_1 = np.array(train_y)
@@ -57,8 +57,8 @@ def print_ideal_functions(ideal_dict):
 print_ideal_functions(get_ideal_function(results))
 
 # ploting the ideal functions
-sn.lineplot(style="darkgrid",data=ideal_data[['x','y13','y1','y4','y34']])
-plt.show()
+# sn.lineplot(style="darkgrid",data=ideal_data[['x','y13','y1','y4','y34']])
+# plt.show()
 
 # # getting the maximum absolute deviation between train data and ideal functions
 
