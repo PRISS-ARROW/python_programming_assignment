@@ -84,12 +84,18 @@ def assign_test():
         #find the row with the x value of the test
         ideal_row = ideal_func.loc[ideal_func['x'] == row['x']]
         #loop through the ideal columns
-        assigned = []
+        assigned = {}
 
         for col in ideal_columns:
             dev = abs(row['y'] - ideal_row[col].values[0])
             max_dev = ideal_deviations[col]*math.sqrt(2)
             if dev <= max_dev:
-                assigned.append({col:dev})
-        print('The {} x value have been assigned ideal function : {}'.format(row['x'],assigned))
+                assigned[col]=dev
+        assigned_func = 'Not assigned'
+        #test if its an empty dictionary
+        if len(assigned) == 0:
+            pass
+        else:
+            assigned_func = min(assigned, key=lambda k: assigned[k])
+        print('The {} test point have been assigned ideal function : {}'.format(row['x'],assigned_func))
 assign_test()
