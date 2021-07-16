@@ -122,6 +122,7 @@ class DataStore():
         """
         results = self.connection.execute('select * from train_table').fetchall()
         df = pd.DataFrame(results)
+        df.columns = results[0].keys()
         return df
 
     def insert_ideal_data(self):
@@ -148,32 +149,7 @@ class DataStore():
         """
         results = self.connection.execute('select * from ideal_table').fetchall()
         df = pd.DataFrame(results)
-        return df
-
-    def insert_test_data(self):
-        """
-        Inserts test data into the sqlite database
-        Parameters
-        ----------
-        None
-        Returns
-        -------
-        None
-        """
-        self.test_data.to_sql('test_table',self.connection,if_exists='append',index=False)
-
-    def get_test_data(self):
-        """
-        Gets test data into the sqlite database
-        Parameters
-        ----------
-        None
-        Returns
-        -------
-        df(DataFrame): A dataframe of test data
-        """
-        results = self.connection.execute('select * from test_table').fetchall()
-        df = pd.DataFrame(results)
+        df.columns = results[0].keys()
         return df
 
     def create_assignment_table(self):
@@ -189,7 +165,9 @@ class DataStore():
         self.metadata = db.MetaData()
         self.assignment_table = db.Table('assignment_table',self.metadata,
         db.Column('x',db.Float(),nullable='False'),
-        db.Column('ideal_function',db.String(255),nullable='False')
+        db.Column('y',db.Float(),nullable='False'),
+        db.Column('deviation',db.Float(),nullable='False'),
+        db.Column('ideal_function',db.Float(),nullable='True')
         )
         self.metadata.create_all(self.engine)
 
@@ -205,6 +183,7 @@ class DataStore():
         """
         results = self.connection.execute(db.select([self.assignment_table])).fetchall()
         df = pd.DataFrame(results)
+        df.columns = results[0].keys()
         return df
 
     def close_connection(self):
@@ -377,24 +356,31 @@ class IdealProcessor(DataStore):
         ideal_func = self.ideal_data[columns]
 
         for index, row in self.test_data.iterrows():
+
             #find the row with the x value of the test
             ideal_row = ideal_func.loc[ideal_func['x'] == row['x']]
             #loop through the ideal columns
             assigned = {}
+            ideal_values = {}
             #check the assignment condition
             for col in ideal_columns:
                 dev = abs(row['y'] - ideal_row[col].values[0])
                 max_dev = ideal_deviations[col]*math.sqrt(2)
                 if dev <= max_dev:
                     assigned[col]=dev
+                    ideal_values[col]=ideal_row[col].values[0]
             assigned_func = 'Not assigned'
             #test if its an empty dictionary
+            ideal_val = None
+            ideal_dev = None
             if len(assigned) == 0:
                 pass
             else:
-                assigned_func = min(assigned, key=lambda k: assigned[k])
+                assigned_func = min(assigned, key=lambda k: assigned[k]) #get the key with the minimum deviation
+                ideal_val = ideal_values[assigned_func]
+                ideal_dev = assigned[assigned_func]
             #save the outcome to the database
-            query = db.insert(self.assignment_table).values(x=row['x'],ideal_function=assigned_func)
+            query = db.insert(self.assignment_table).values(x=row['x'],y=row['y'],deviation=ideal_dev,ideal_function=ideal_val)
             ResultProxy = self.connection.execute(query)
 
 
@@ -406,7 +392,6 @@ def main():
     #save the datasets to their respective table using sqlalchemy
     ideal_processor.insert_train_data()
     ideal_processor.insert_ideal_data()
-    ideal_processor.insert_test_data()
     #compare the least_square and their maximum_deviations
     results,maximum_deviations = ideal_processor.compare_list_square()
     #get the ideal functions and ideal deviations
@@ -419,10 +404,11 @@ def main():
 
     #assign the test data
     ideal_processor.assign_test(ideal_deviations)
-    #print the assigned dataset from the database
-    assigned_data = ideal_processor.get_assigned_data()
-    print(assigned_data)
 
+    #print the assigned,train,ideal functions data saved
+    print(ideal_processor.get_ideal_data())
+    print(ideal_processor.get_train_data())
+    print(ideal_processor.get_assigned_data())
     #close db connection
     ideal_processor.close_connection()
 if __name__ == '__main__':
