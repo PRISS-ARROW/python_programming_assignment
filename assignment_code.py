@@ -369,7 +369,6 @@ class IdealProcessor(DataStore):
                 if dev <= max_dev:
                     assigned[col]=dev
                     ideal_values[col]=ideal_row[col].values[0]
-            assigned_func = 'Not assigned'
             #test if its an empty dictionary
             ideal_val = None
             ideal_dev = None
